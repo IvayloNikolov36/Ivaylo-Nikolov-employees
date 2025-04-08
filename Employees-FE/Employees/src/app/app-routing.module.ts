@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { ImportEmployeesProjectDataComponent } from './components';
 
 const routes: Routes = [
-  { path: 'import', component: ImportEmployeesProjectDataComponent }
+  { path: 'import', component: ImportEmployeesProjectDataComponent },
+  { path: '', pathMatch: 'full', redirectTo: 'import' }
 ];
 
 @NgModule({

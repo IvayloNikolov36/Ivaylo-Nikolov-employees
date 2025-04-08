@@ -1,1 +1,19 @@
-<p>import-employees-project-data works!</p>
+<div class="container-fluid m-3">
+
+    <form [formGroup]="form" (ngSubmit)="uploadFile(form.value)">
+        <div class="mb-3 w-50">
+            <label for="formFile" class="form-label">Upload your file</label>
+            <input
+                class="form-control"
+                type="file"
+                #filePicker
+                id="formFile"
+                (change)="onFileChange($event)"
+                accept=".csv"
+            >
+        </div>
+        <button type="submit" class="btn btn-primary" [disabled]="!form.valid">
+            Upload
+        </button>
+    </form>
+</div>
