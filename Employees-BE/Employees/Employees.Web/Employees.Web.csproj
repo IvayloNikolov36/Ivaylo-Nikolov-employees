@@ -10,4 +10,13 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ViewModels\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Employees.Services.CSVHelper\Employees.Services.CSVHelper.csproj" />
+    <ProjectReference Include="..\Employees.Services\Employees.Services.csproj" />
+  </ItemGroup>
+
 </Project>

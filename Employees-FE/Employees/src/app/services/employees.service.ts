@@ -1,9 +1,9 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Inject } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { uploadDataUrl } from "../controllers";
 import { Observable } from "rxjs";
 
-@Inject({
+@Injectable({
     providedIn: 'root'
 })
 export class EmployeesService {

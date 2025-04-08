@@ -1,20 +1,25 @@
-using Employees.Web.ViewModels;
+using Employees.Services.Contracts;
+using Employees.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Employees.Web.Controllers;
 
 public class EmployeesController : ApiController
 {
+    private readonly IEmployesImportService employeesImportService;
 
-    public EmployeesController()
+    public EmployeesController(IEmployesImportService employeesImportService)
     {
-
+        this.employeesImportService = employeesImportService;
     }
 
     [HttpPost]
     [Route("upload")]
-    public async Task<IActionResult> UploadEmployeesData(IFormFile file)
+    public IActionResult UploadEmployeesData(IFormFile file)
     {
-        return this.Ok(file.FileName);
+        IEnumerable<EmployeeViewModel> employeesData = this.employeesImportService
+            .GetEmployeesData(file.OpenReadStream());
+
+        return this.Ok(employeesData);
     }
 }

@@ -1,9 +1,15 @@
-using Employees.Web.Infrastructure;
+using Employees.Services.Contracts;
+using Employees.Services.CSVHelper;
+using Employees.Services.Implementations;
 using Employees.Web.Infrastructure.Extensions;
+using static Employees.Web.Infrastructure.WebConstants;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddSingleton<ICsvParserService, CsvParserService>();
+builder.Services.AddScoped<IEmployesImportService, EmployesImportService>();
 
 builder.Services.AddCors(corsOptions => corsOptions.Configure());
 builder.Services.AddControllers();
@@ -14,6 +20,7 @@ builder.Services.AddSwaggerGen();
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -22,7 +29,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors(WebConstants.CorsPolicyName);
+app.UseCors(CorsPolicyName);
 
 app.UseAuthorization();
 
