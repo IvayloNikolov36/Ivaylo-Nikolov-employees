@@ -1,0 +1,28 @@
+<div class="table-responsive mt-2 mx-auto w-75">
+    @if (projectsData) {
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th>EmployeeID #1</th>
+                <th>EmployeeID #2</th>
+                <th>ProjectID</th>
+                <th>Days worked</th>
+            </tr>
+        </thead>
+        @for(row of projectsData;track row.projectId) {
+        <tbody>
+            <tr>
+                <td>{{ row.firstEmployeeId }}</td>
+                <td>{{ row.secondEmployeeId }}</td>
+                <td>{{ row.projectId }}</td>
+                <td>{{ row.days }}</td>
+            </tr>
+        </tbody>
+        }
+        @if(projectsData.length === 0) {
+        <tbody>
+            <div class="d-flex my-3 text-info">No data records to show.</div>
+        </tbody>
+        }
+    </table>
+    }

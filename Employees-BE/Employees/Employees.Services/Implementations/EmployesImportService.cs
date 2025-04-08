@@ -42,6 +42,11 @@ public class EmployesImportService : IEmployesImportService
             int maxDays = projectData
                 .MaxBy(x => x.WorkingDays)!.WorkingDays;
 
+            if (maxDays == 0)
+            {
+                continue;
+            }
+
             ProjectData[] pairs = projectData
                 .Where(x => x.WorkingDays == maxDays)
                 .ToArray();

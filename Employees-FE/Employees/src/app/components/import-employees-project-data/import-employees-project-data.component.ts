@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EmployeesService } from '../../services/employees.service';
+import { ProjectEmployeesDataModel } from '../../models';
 
 @Component({
   selector: 'app-import-employees-project-data',
@@ -10,6 +11,8 @@ import { EmployeesService } from '../../services/employees.service';
 export class ImportEmployeesProjectDataComponent implements OnInit {
 
   form!: FormGroup;
+
+  projectsData!: ProjectEmployeesDataModel[];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -23,7 +26,12 @@ export class ImportEmployeesProjectDataComponent implements OnInit {
     const file: File = formValue.fileData;
 
     this.employeesService.uploadEmployeesData(file)
-      .subscribe();
+      .subscribe({
+        next: (data: ProjectEmployeesDataModel[]) => {
+          this.projectsData = data;
+        },
+        error: (err) => console.log('Error occured while parsing the file data!')
+      });
   }
 
   onFileChange(event: Event): void {
