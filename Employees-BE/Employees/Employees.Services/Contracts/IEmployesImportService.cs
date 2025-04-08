@@ -4,5 +4,5 @@ namespace Employees.Services.Contracts;
 
 public interface IEmployesImportService
 {
-    IEnumerable<EmployeeViewModel> GetEmployeesData(Stream fileStream);
+    IEnumerable<ProjectEmployeesDataViewModel> GetEmployeesData(Stream fileStream);
 }

@@ -17,7 +17,7 @@ public class EmployeesController : ApiController
     [Route("upload")]
     public IActionResult UploadEmployeesData(IFormFile file)
     {
-        IEnumerable<EmployeeViewModel> employeesData = this.employeesImportService
+        IEnumerable<ProjectEmployeesDataViewModel> employeesData = this.employeesImportService
             .GetEmployeesData(file.OpenReadStream());
 
         return this.Ok(employeesData);
