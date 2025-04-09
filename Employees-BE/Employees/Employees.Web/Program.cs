@@ -2,6 +2,7 @@ using Employees.Services.Contracts;
 using Employees.Services.CSVHelper;
 using Employees.Services.Implementations;
 using Employees.Web.Infrastructure.Extensions;
+using Employees.Web.Infrastructure.Middlewares;
 using static Employees.Web.Infrastructure.WebConstants;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,8 @@ builder.Services.AddSwaggerGen();
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

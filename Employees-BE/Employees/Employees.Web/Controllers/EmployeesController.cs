@@ -15,10 +15,10 @@ public class EmployeesController : ApiController
 
     [HttpPost]
     [Route("upload")]
-    public IActionResult UploadEmployeesData(IFormFile file)
+    public IActionResult UploadEmployeesData([FromForm] IFormFile file, [FromForm] string dateFormat)
     {
         IEnumerable<ProjectEmployeesDataViewModel> employeesData = this.employeesImportService
-            .GetEmployeesData(file.OpenReadStream());
+            .GetEmployeesData(file.OpenReadStream(), dateFormat);
 
         return this.Ok(employeesData);
     }

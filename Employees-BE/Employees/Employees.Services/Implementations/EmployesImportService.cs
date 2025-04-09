@@ -14,9 +14,10 @@ public class EmployesImportService : IEmployesImportService
         this.csvService = csvService;
     }
 
-    public IEnumerable<ProjectEmployeesDataViewModel> GetEmployeesData(Stream fileStream)
+    public IEnumerable<ProjectEmployeesDataViewModel> GetEmployeesData(Stream fileStream, string dateFormat)
     {
-        IEnumerable<EmployeeModel> data = this.csvService.ParseToEmployeeModel(fileStream);
+        IEnumerable<EmployeeModel> data = this.csvService
+            .ParseToEmployeeModel(fileStream, dateFormat);
 
         var groupedData = data
             .GroupBy(x => x.ProjectId)

@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Employees.Common\Employees.Common.csproj" />
     <ProjectReference Include="..\Employees.Services.CSVHelper\Employees.Services.CSVHelper.csproj" />
     <ProjectReference Include="..\Employees.ViewModels\Employees.ViewModels.csproj" />
   </ItemGroup>

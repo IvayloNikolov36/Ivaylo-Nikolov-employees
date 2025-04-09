@@ -4,5 +4,5 @@ namespace Employees.Services.CSVHelper;
 
 public interface ICsvParserService
 {
-    IEnumerable<EmployeeModel> ParseToEmployeeModel(Stream fileStream);
+    IEnumerable<EmployeeModel> ParseToEmployeeModel(Stream fileStream, string dateFormat);
 }
