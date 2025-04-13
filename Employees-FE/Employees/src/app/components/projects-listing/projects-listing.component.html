@@ -9,7 +9,7 @@
                 <th>Days worked</th>
             </tr>
         </thead>
-        @for(row of projectsData;track row.projectId) {
+        @for(row of projectsData; track row.id) {
         <tbody>
             <tr>
                 <td>{{ row.firstEmployeeId }}</td>

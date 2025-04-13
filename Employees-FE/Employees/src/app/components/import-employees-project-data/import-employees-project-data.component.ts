@@ -35,7 +35,7 @@ export class ImportEmployeesProjectDataComponent implements OnInit {
         next: (data: ProjectEmployeesDataModel[]) => {
           this.projectsData = data;
         },
-        error: (err) => this.toastr.error(err.error.errors.join(' ').trim())
+        error: (err) => this.toastr.error(err.error.errors?.join(' ').trim())
       });
   }
 
