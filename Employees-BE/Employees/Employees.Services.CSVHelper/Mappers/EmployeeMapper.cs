@@ -15,18 +15,33 @@ public sealed class EmployeeMapper : ClassMap<EmployeeModel>
     private void ConfigureMappings(string dateFormat)
     {
         this.Map(m => m.EmployeeId).Name(EmployeeId);
+
         this.Map(m => m.ProjectId).Name(ProjectId);
-        this.Map(m => m.DateFrom).Name(DateFrom).Convert(s =>
-            DateTime.ParseExact(
-                s.Row.Parser.Record![2].Trim(),
-                dateFormat,
-                CultureInfo.InvariantCulture));
-        this.Map(m => m.DateTo).Name(DateTo).Convert(s =>
-            s.Row.Parser.Record![3].Trim() == string.Empty
-                ? null
-                : DateTime.ParseExact(
-                    s.Row.Parser.Record![3].Trim(),
+
+        this.Map(m => m.DateFrom)
+            .Name(DateFrom)
+            .Convert(s =>
+                DateTime.ParseExact(
+                    s.Row.Parser.Record![2].Trim(),
                     dateFormat,
-                    CultureInfo.InvariantCulture));
+                    CultureInfo.InvariantCulture)
+            );
+
+        this.Map(m => m.DateTo)
+            .Name(DateTo)
+            .Convert(s =>
+            {
+                string? dateToString = s.Row.Parser.Record![3].Trim()?.ToLower();
+
+                if (string.IsNullOrEmpty(dateToString) || dateToString == "null")
+                {
+                    return null;
+                }
+
+                return DateTime.ParseExact(
+                    dateToString,
+                    dateFormat,
+                    CultureInfo.InvariantCulture);
+            });
     }
 }
