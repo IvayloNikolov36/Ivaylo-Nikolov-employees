@@ -1,6 +1,7 @@
 ﻿using Employees.Services.Contracts;
 using Employees.Services.CSVHelper;
 using Employees.Services.CSVHelper.Models;
+using Employees.Services.Models;
 using Employees.ViewModels;
 
 namespace Employees.Services.Implementations;
@@ -14,12 +15,14 @@ public class EmployesImportService : IEmployesImportService
         this.csvService = csvService;
     }
 
-    public IEnumerable<ProjectEmployeesDataViewModel> GetEmployeesData(Stream fileStream, string dateFormat)
+    public IEnumerable<ProjectEmployeesDataViewModel> GetEmployeesData(
+        Stream fileStream,
+        string dateFormat)
     {
-        IEnumerable<EmployeeModel> data = this.csvService
+        IEnumerable<EmployeeModel> parsedEmployeesData = this.csvService
             .ParseToEmployeeModel(fileStream, dateFormat);
 
-        var groupedData = data
+        var employeesDataGroupedByProject = parsedEmployeesData
             .GroupBy(x => x.ProjectId)
             .Select(gr => new
             {
@@ -27,56 +30,33 @@ public class EmployesImportService : IEmployesImportService
                 Employees = gr.ToArray()
             });
 
-        Dictionary<int, ProjectData[]> dataByProjectId = new(groupedData.Count());
+        Dictionary<int, ProjectData[]> dataByProjectId = new(employeesDataGroupedByProject.Count());
 
-        foreach (var group in groupedData)
+        foreach (var group in employeesDataGroupedByProject)
         {
-            int projectId = group.ProjectId;
+            EmployeeWorkingPeriods[] employeesData = this.AggregateEmployeesWorkingPeriods(group.Employees);
 
-            Queue<ProjectData> projectData = this.GetEmployeesPairWorkingDays(group.Employees);
-
+            Queue<ProjectData> projectData = this.GetEmployeesPairWorkingDays(employeesData);
             if (projectData.Count == 0)
             {
                 continue;
             }
 
-            int maxDays = projectData
-                .MaxBy(x => x.WorkingDays)!.WorkingDays;
-
+            int maxDays = projectData.MaxBy(x => x.WorkingDays)!.WorkingDays;
             if (maxDays == 0)
             {
                 continue;
             }
 
-            ProjectData[] pairs = projectData
-                .Where(x => x.WorkingDays == maxDays)
-                .ToArray();
+            ProjectData[] pairs = [.. projectData.Where(x => x.WorkingDays == maxDays)];
 
-            dataByProjectId.Add(projectId, pairs);
+            dataByProjectId.Add(group.ProjectId, pairs);
         }
 
-        List<ProjectEmployeesDataViewModel> result = new();
-
-        foreach (var pair in dataByProjectId)
-        {
-            ProjectData[] employeesOnSameProject = pair.Value;
-
-            foreach (ProjectData employeesPair in employeesOnSameProject)
-            {
-                result.Add(new ProjectEmployeesDataViewModel
-                {
-                    ProjectId = pair.Key,
-                    FirstEmployeeId = employeesPair.FirstEmployeeId,
-                    SecondEmployeeId = employeesPair.SecondEmployeeId,
-                    Days = employeesPair.WorkingDays
-                });
-            }
-        }
-
-        return result;
+        return this.GetResultData(dataByProjectId);
     }
 
-    private Queue<ProjectData> GetEmployeesPairWorkingDays(EmployeeModel[] employees)
+    private Queue<ProjectData> GetEmployeesPairWorkingDays(EmployeeWorkingPeriods[] employees)
     {
         Queue<ProjectData> queue = new();
 
@@ -84,11 +64,11 @@ public class EmployesImportService : IEmployesImportService
 
         while (employeeIndex < employees.Length - 1)
         {
-            EmployeeModel employee = employees[employeeIndex];
+            EmployeeWorkingPeriods employee = employees[employeeIndex];
 
             for (int i = employeeIndex + 1; i < employees.Length; i++)
             {
-                EmployeeModel currentEmployee = employees[i];
+                EmployeeWorkingPeriods currentEmployee = employees[i];
 
                 ProjectData projectData = new()
                 {
@@ -106,29 +86,85 @@ public class EmployesImportService : IEmployesImportService
         return queue;
     }
 
-    private int GetDaysTogether(EmployeeModel employee, EmployeeModel secondEmployee)
+    private int GetDaysTogether(EmployeeWorkingPeriods employee, EmployeeWorkingPeriods secondEmployee)
     {
-        DateTime employeeDateTo = employee.DateTo ?? DateTime.UtcNow;
-        DateTime secondEmployeeDateTo = secondEmployee.DateTo ?? DateTime.UtcNow;
+        int totalDaysTogether = 0;
 
-        bool noCross = secondEmployee.DateFrom >= employeeDateTo
-            || employee.DateFrom >= secondEmployeeDateTo;
-
-        if (noCross)
+        foreach (Period employeePeriod in employee.WorkingPeriods)
         {
-            return 0;
+            DateTime employeeDateFrom = employeePeriod.DateFrom;
+            DateTime employeeDateTo = employeePeriod.DateTo ?? DateTime.UtcNow;
+
+            foreach (Period secondEmployeePeriod in secondEmployee.WorkingPeriods)
+            {
+                DateTime secondEmployeeDateFrom = secondEmployeePeriod.DateFrom;
+                DateTime secondEmployeeDateTo = secondEmployeePeriod.DateTo ?? DateTime.UtcNow;
+
+                bool noCross = secondEmployeeDateFrom >= employeeDateTo
+                    || employeeDateFrom >= secondEmployeeDateTo;
+
+                if (noCross)
+                {
+                    continue;
+                }
+
+                DateTime latestStartDate = employeeDateFrom > secondEmployeeDateFrom
+                    ? employeeDateFrom
+                    : secondEmployeeDateFrom;
+
+                DateTime earliestEndDate = employeeDateTo < secondEmployeeDateTo
+                    ? employeeDateTo
+                    : secondEmployeeDateTo;
+
+                TimeSpan span = earliestEndDate - latestStartDate;
+
+                totalDaysTogether += span.Days;
+            }
         }
 
-        DateTime latestStartDate = employee.DateFrom > secondEmployee.DateFrom
-            ? employee.DateFrom
-            : secondEmployee.DateFrom;
+        return totalDaysTogether;
+    }
 
-        DateTime earliestEndDate = employeeDateTo < secondEmployeeDateTo
-            ? employeeDateTo
-            : secondEmployeeDateTo;
+    private EmployeeWorkingPeriods[] AggregateEmployeesWorkingPeriods(EmployeeModel[] employees)
+    {
+        return employees
+            .GroupBy(emp => emp.EmployeeId)
+            .Select(gr => new EmployeeWorkingPeriods
+            {
+                EmployeeId = gr.Key,
+                WorkingPeriods = gr.Select(x => new Period
+                {
+                    DateFrom = x.DateFrom,
+                    DateTo = x.DateTo
+                }).ToArray()
+            }).ToArray();
+    }
 
-        TimeSpan span = earliestEndDate - latestStartDate;
+    private IEnumerable<ProjectEmployeesDataViewModel> GetResultData(
+        Dictionary<int, ProjectData[]> dataByProjectId)
+    {
+        List<ProjectEmployeesDataViewModel> result = new();
+        int id = 0;
 
-        return span.Days;
+        foreach (KeyValuePair<int, ProjectData[]> pair in dataByProjectId)
+        {
+            ProjectData[] employeesOnSameProject = pair.Value;
+
+            foreach (ProjectData employeesPair in employeesOnSameProject)
+            {
+                result.Add(new ProjectEmployeesDataViewModel
+                {
+                    Id = ++id,
+                    ProjectId = pair.Key,
+                    FirstEmployeeId = employeesPair.FirstEmployeeId,
+                    SecondEmployeeId = employeesPair.SecondEmployeeId,
+                    Days = employeesPair.WorkingDays
+                });
+            }
+        }
+
+        return result
+            .OrderByDescending(r => r.Days)
+            .ThenBy(r => r.ProjectId);
     }
 }
