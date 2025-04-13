@@ -92,33 +92,21 @@ public class EmployesImportService : IEmployesImportService
 
         foreach (Period employeePeriod in employee.WorkingPeriods)
         {
-            DateTime employeeDateFrom = employeePeriod.DateFrom;
-            DateTime employeeDateTo = employeePeriod.DateTo ?? DateTime.UtcNow;
+            Period firstEmpPeriod = new()
+            {
+                DateFrom = employeePeriod.DateFrom,
+                DateTo = employeePeriod.DateTo ?? DateTime.UtcNow
+            };
 
             foreach (Period secondEmployeePeriod in secondEmployee.WorkingPeriods)
             {
-                DateTime secondEmployeeDateFrom = secondEmployeePeriod.DateFrom;
-                DateTime secondEmployeeDateTo = secondEmployeePeriod.DateTo ?? DateTime.UtcNow;
-
-                bool noCross = secondEmployeeDateFrom >= employeeDateTo
-                    || employeeDateFrom >= secondEmployeeDateTo;
-
-                if (noCross)
+                Period secondEmpPeriod = new()
                 {
-                    continue;
-                }
+                    DateFrom = secondEmployeePeriod.DateFrom,
+                    DateTo = secondEmployeePeriod.DateTo ?? DateTime.UtcNow
+                };
 
-                DateTime latestStartDate = employeeDateFrom > secondEmployeeDateFrom
-                    ? employeeDateFrom
-                    : secondEmployeeDateFrom;
-
-                DateTime earliestEndDate = employeeDateTo < secondEmployeeDateTo
-                    ? employeeDateTo
-                    : secondEmployeeDateTo;
-
-                TimeSpan span = earliestEndDate - latestStartDate;
-
-                totalDaysTogether += span.Days;
+                totalDaysTogether += this.CalculateDaysTogether(firstEmpPeriod, secondEmpPeriod);
             }
         }
 
@@ -166,5 +154,28 @@ public class EmployesImportService : IEmployesImportService
         return result
             .OrderByDescending(r => r.Days)
             .ThenBy(r => r.ProjectId);
+    }
+
+    private int CalculateDaysTogether(Period firstEmployeePeriod, Period secondEmployeePeriod)
+    {
+        bool noCross = secondEmployeePeriod.DateFrom >= firstEmployeePeriod.DateTo
+            || firstEmployeePeriod.DateFrom >= secondEmployeePeriod.DateTo;
+
+        if (noCross)
+        {
+            return 0;
+        }
+
+        DateTime latestStartDate = firstEmployeePeriod.DateFrom > secondEmployeePeriod.DateFrom
+            ? firstEmployeePeriod.DateFrom
+            : secondEmployeePeriod.DateFrom;
+
+        DateTime? earliestEndDate = firstEmployeePeriod.DateTo < secondEmployeePeriod.DateTo
+            ? firstEmployeePeriod.DateTo
+            : secondEmployeePeriod.DateTo;
+
+        TimeSpan span = earliestEndDate!.Value - latestStartDate;
+
+        return span.Days;
     }
 }
